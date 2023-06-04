@@ -3,3 +3,4 @@
 - [ ] Parse trailer
 - [ ] Parse stream
 - [ ] Full PDF parsing
+- [ ] Find corner case with real-world PDF samples
