@@ -1,0 +1,5 @@
+- [ ] Support comment
+- [ ] Parse xref table
+- [ ] Parse trailer
+- [ ] Parse stream
+- [ ] Full PDF parsing

@@ -23,10 +23,6 @@ impl Header {
     }
 }
 
-// TODO: implement CrossReferenceTable::parse
-
-// TODO: implement Trailer::parse
-
 impl<'a> Object<'a> {
     pub fn parse_null(input: &'a [u8]) -> ParseResult<'a, Object<'a>> {
         let (input, _) = tag(b"null")(input)?;
@@ -202,3 +198,7 @@ impl<'a> Object<'a> {
         }
     }
 }
+
+// TODO: implement CrossReferenceTable::parse
+
+// TODO: implement Trailer::parse

