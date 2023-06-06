@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use std::{fs::File, io::Read, path::PathBuf};
-
     use pdf_parser::object::{NameObject, PDF};
+    use std::{fs::File, io::Read, path::PathBuf};
 
     fn read_testcase(filename: &str) -> Vec<u8> {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -909,8 +908,7 @@ mod tests {
         let result = PDF::parse(input);
         println!("{:?}", result);
         assert!(result.is_ok());
-        let (input, pdf) = result.unwrap();
-        assert_eq!(input, b""); // should consume input
+        let pdf = result.unwrap();
         // Check header
         assert_eq!(pdf.header.major, 1);
         assert_eq!(pdf.header.minor, 7);
@@ -944,6 +942,5 @@ mod tests {
             }
             _ => panic!("Expected Object::Dictionary"),
         }
-
     }
 }

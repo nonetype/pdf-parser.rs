@@ -1,12 +1,10 @@
 use nom::branch::alt;
 use nom::bytes::complete::take_until;
-use nom::character::complete::{digit1, hex_digit1, newline};
-use nom::combinator::verify;
-use nom::multi::{many0, many1, many_m_n};
+use nom::character::complete::{hex_digit1, newline};
+use nom::multi::{many0, many_m_n};
 use nom::sequence::{delimited, tuple};
 use nom::{bytes::complete::tag, character::complete::char};
 
-use crate::error::ParseError;
 use crate::object::{
     CrossReferenceEntry, CrossReferenceTable, DictionaryObject, NameObject, Object, Trailer, PDF,
 };
@@ -17,21 +15,24 @@ use crate::utils::{
 use crate::{error::ParseResult, object::Header};
 
 impl<'a> PDF<'a> {
-    pub fn parse(input: &'a [u8]) -> ParseResult<'a, PDF<'a>> {
-        let (input, header) = Header::parse(input)?;
-        let (input, objects) = many0(Object::parse_body)(input)?;
-        let (input, xref_table) = many0(CrossReferenceTable::parse)(input)?;
-        let (input, trailer) = Trailer::parse(input)?;
+    pub fn parse(input: &'a [u8]) -> Result<Self, crate::error::ParseError> {
+        // let (input, header) = Header::parse(input)?;
+        let (input, header) =
+            Header::parse(input).map_err(|_| crate::error::ParseError::InvalidPDFHeader)?;
+        let (input, objects) = many0(Object::parse_body)(input)
+            .map_err(|_| crate::error::ParseError::InvalidPDFBody)?;
+        let (input, xref_table) = many0(CrossReferenceTable::parse)(input)
+            .map_err(|_| crate::error::ParseError::InvalidPDFXrefTable)?;
+        let (input, trailer) =
+            Trailer::parse(input).map_err(|_| crate::error::ParseError::InvalidPDFTrailer)?;
+        debug_assert!(input.is_empty());
 
-        Ok((
-            input,
-            Self {
-                header,
-                body: objects,
-                cross_reference_tables: xref_table,
-                trailer,
-            },
-        ))
+        Ok(Self {
+            header,
+            body: objects,
+            cross_reference_tables: xref_table,
+            trailer,
+        })
     }
 }
 

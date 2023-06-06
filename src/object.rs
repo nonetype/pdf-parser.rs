@@ -1,4 +1,7 @@
-use std::{collections::HashMap, hash::{Hasher, Hash}, fmt};
+use std::{
+    collections::HashMap,
+    hash::{Hash, Hasher},
+};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub enum Either<L, R> {
@@ -84,7 +87,7 @@ pub enum Object<'a> {
     },
     /// An indirect object definition.
     IndirectObject {
-        id: u32, 
+        id: u32,
         generation: u32,
         dictionary: Box<Object<'a>>,
     },
@@ -107,25 +110,29 @@ impl<'a> Hash for Object<'a> {
                     v.hash(state);
                 });
                 s.hash(state);
-            },
+            }
             Object::Stream(d, s) => {
                 d.iter().map(|(k, v)| {
                     k.hash(state);
                     v.hash(state);
                 });
                 s.hash(state);
-            },
+            }
             Object::Null => state.write_u8(0),
             Object::Comment(s) => s.hash(state),
             Object::IndirectReference { id, generation } => {
                 id.hash(state);
                 generation.hash(state);
-            },
-            Object::IndirectObject { id, generation, dictionary } => {
+            }
+            Object::IndirectObject {
+                id,
+                generation,
+                dictionary,
+            } => {
                 id.hash(state);
                 generation.hash(state);
                 dictionary.hash(state);
-            },
+            }
         }
     }
 }

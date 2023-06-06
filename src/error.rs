@@ -1,4 +1,7 @@
-use std::{str::Utf8Error, num::{ParseIntError, ParseFloatError}};
+use std::{
+    num::{ParseFloatError, ParseIntError},
+    str::Utf8Error,
+};
 
 use nom::{error::ErrorKind, IResult};
 
@@ -22,6 +25,8 @@ pub enum ParseError {
     InvalidPDFVersion,
     #[error("Invalid PDF header")]
     InvalidPDFHeader,
+    #[error("Invalid PDF body")]
+    InvalidPDFBody,
     #[error("Invalid PDF trailer")]
     InvalidPDFTrailer,
     #[error("Invalid PDF cross reference table")]
@@ -82,5 +87,3 @@ impl<I> nom::error::ParseError<I> for ParseError {
 //         Self::ParseIntError(e)
 //     }
 // }
-
-
