@@ -3,21 +3,24 @@ use nom::character::complete::hex_digit1;
 use nom::sequence::{delimited, tuple};
 use nom::{bytes::complete::tag, character::complete::char};
 
-use crate::object::{DictionaryObject, NameObject, Object};
+use crate::object::{
+    CrossReferenceEntry, CrossReferenceTable, DictionaryObject, NameObject, Object, Trailer,
+};
 use crate::utils::{
-    digit1_u32, take_bracketed, take_till_whitespace, take_while_separator, take_while_whitespace,
+    digit1_u32, take_bracketed, take_till_newline, take_till_whitespace, take_while_separator,
+    take_while_whitespace,
 };
 use crate::{error::ParseResult, object::Header};
 
 impl Header {
     pub fn parse(input: &[u8]) -> ParseResult<Header> {
-        let (input, _) = tag(b"%PDF-")(input)?;
-        // Take a str digit and convert it to u32.
-
-        let (input, major) = digit1_u32(input)?;
-        let (input, _) = char('.')(input)?;
-        let (input, minor) = digit1_u32(input)?;
-        let (input, _) = take_while_separator(input)?;
+        let (input, (_, major, _, minor, _)) = tuple((
+            tag(b"%PDF-"),
+            digit1_u32,
+            char('.'),
+            digit1_u32,
+            take_while_separator,
+        ))(input)?;
 
         Ok((input, Header { major, minor }))
     }
@@ -25,26 +28,22 @@ impl Header {
 
 impl<'a> Object<'a> {
     pub fn parse_null(input: &'a [u8]) -> ParseResult<'a, Object<'a>> {
-        let (input, _) = tag(b"null")(input)?;
-        let (input, _) = take_while_separator(input)?;
+        let (input, _) = tuple((tag(b"null"), take_while_separator))(input)?;
         Ok((input, Object::Null))
     }
 
     pub fn parse_bool(input: &'a [u8]) -> ParseResult<'a, Object<'a>> {
-        let (input, result) = crate::utils::bool(input)?;
-        let (input, _) = take_while_separator(input)?;
+        let (input, (result, _)) = tuple((crate::utils::bool, take_while_separator))(input)?;
         Ok((input, Object::Boolean(result)))
     }
 
     pub fn parse_integer(input: &'a [u8]) -> ParseResult<'a, Object<'a>> {
-        let (input, result) = crate::utils::digit1_i32(input)?;
-        let (input, _) = take_while_separator(input)?;
+        let (input, (result, _)) = tuple((crate::utils::digit1_i32, take_while_separator))(input)?;
         Ok((input, Object::Integer(result)))
     }
 
     pub fn parse_real(input: &'a [u8]) -> ParseResult<'a, Object<'a>> {
-        let (input, result) = crate::utils::float_f32(input)?;
-        let (input, _) = take_while_separator(input)?;
+        let (input, (result, _)) = tuple((crate::utils::float_f32, take_while_separator))(input)?;
         Ok((input, Object::Real(result)))
     }
 
@@ -55,27 +54,30 @@ impl<'a> Object<'a> {
     }
 
     pub fn parse_literal_string(input: &'a [u8]) -> ParseResult<Object<'a>> {
-        let (input, value) = delimited(char('('), take_bracketed(b'(', b')'), char(')'))(input)?;
-        let (input, _) = take_while_separator(input)?;
-
+        let (input, (value, _)) = tuple((
+            delimited(char('('), take_bracketed(b'(', b')'), char(')')),
+            take_while_separator,
+        ))(input)?;
         let result = std::str::from_utf8(value).map_err(crate::error::ParseError::UTF8Error)?;
+
         Ok((input, Object::LiteralString(result)))
     }
 
     pub fn parse_hexadecimal_string(input: &'a [u8]) -> ParseResult<Object<'a>> {
-        let (input, value) = delimited(char('<'), hex_digit1, char('>'))(input)?;
-        let (input, _) = take_while_separator(input)?;
-
+        let (input, (value, _)) = tuple((
+            delimited(char('<'), hex_digit1, char('>')),
+            take_while_separator,
+        ))(input)?;
         let result = std::str::from_utf8(value).map_err(crate::error::ParseError::UTF8Error)?;
+
         Ok((input, Object::HexadecimalString(result)))
     }
 
     pub fn parse_name(input: &'a [u8]) -> ParseResult<Object<'a>> {
-        let (input, _) = char('/')(input)?;
-        let (input, value) = take_till_whitespace(input)?;
-        let (input, _) = take_while_separator(input)?;
-
+        let (input, (_, value, _)) =
+            tuple((char('/'), take_till_whitespace, take_while_separator))(input)?;
         let result = std::str::from_utf8(value).map_err(crate::error::ParseError::UTF8Error)?;
+
         Ok((input, Object::Name(NameObject(result))))
     }
 
@@ -135,29 +137,37 @@ impl<'a> Object<'a> {
     }
 
     pub fn parse_indirect_reference(input: &'a [u8]) -> ParseResult<Object<'a>> {
-        let (input, (id, _, generation, _)) =
-            tuple((digit1_u32, char(' '), digit1_u32, tag(" R")))(input)?;
-        let (input, _) = take_while_separator(input)?;
+        let (input, (id, _, generation, _, _)) = tuple((
+            digit1_u32,
+            char(' '),
+            digit1_u32,
+            tag(" R"),
+            take_while_separator,
+        ))(input)?;
 
         Ok((input, Object::IndirectReference { id, generation }))
     }
 
     pub fn parse_indirect_object(input: &'a [u8]) -> ParseResult<Object<'a>> {
-        let (input, (id, _, generation, _)) =
-            tuple((digit1_u32, char(' '), digit1_u32, tag(" obj")))(input)?;
-        let (input, _) = take_while_separator(input)?;
-        let (input, dictionary) = Object::parse_dictionary(input)?;
-        let (input, _) = take_while_separator(input)?;
-        let (input, _) = tag("endobj")(input)?;
-        let (input, _) = take_while_separator(input)?;
-        
+        let (input, (id, _, generation, _, _, dictionary, _, _, _)) = tuple((
+            digit1_u32,
+            char(' '),
+            digit1_u32,
+            tag(" obj"),
+            take_while_separator,
+            Object::parse_dictionary,
+            take_while_separator,
+            tag("endobj"),
+            take_while_separator,
+        ))(input)?;
+
         Ok((
             input,
             Object::IndirectObject {
                 id,
                 generation,
-                dictionary: Box::new(dictionary)
-            }
+                dictionary: Box::new(dictionary),
+            },
         ))
     }
 
@@ -208,5 +218,21 @@ impl<'a> Object<'a> {
 }
 
 // TODO: implement CrossReferenceTable::parse
+impl CrossReferenceTable {
+    pub fn parse(input: &[u8]) -> ParseResult<CrossReferenceTable> {
+        todo!()
+    }
+}
+
+impl CrossReferenceEntry {
+    pub fn parse(input: &[u8]) -> ParseResult<CrossReferenceEntry> {
+        todo!()
+    }
+}
 
 // TODO: implement Trailer::parse
+impl<'a> Trailer<'a> {
+    pub fn parse(input: &'a [u8]) -> ParseResult<Trailer<'a>> {
+        todo!()
+    }
+}
