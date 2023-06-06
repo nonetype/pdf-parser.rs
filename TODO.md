@@ -1,6 +1,6 @@
-- [ ] Support comment
-- [ ] Parse xref table
-- [ ] Parse trailer
-- [ ] Parse stream
-- [ ] Full PDF parsing
+- [x] Support comment
+- [x] Parse xref table
+- [x] Parse trailer
+- [x] Parse stream
+- [x] Full PDF parsing
 - [ ] Find corner case with real-world PDF samples
