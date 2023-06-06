@@ -1,6 +1,18 @@
 #[cfg(test)]
 mod tests {
-    use pdf_parser::object::{NameObject};
+    use std::{fs::File, io::Read, path::PathBuf};
+
+    use pdf_parser::object::{NameObject, PDF};
+
+    fn read_testcase(filename: &str) -> Vec<u8> {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("assets");
+        path.push(filename);
+        let mut file = File::open(path).unwrap();
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).unwrap();
+        buffer
+    }
 
     #[test]
     fn test_parse_null() {
@@ -642,8 +654,9 @@ mod tests {
         let (input, obj) = result.unwrap();
         assert_eq!(input, b""); // should consume input
         match obj {
-            pdf_parser::object::Object::Dictionary(d) => {
+            pdf_parser::object::Object::Dictionary(d, s) => {
                 assert_eq!(d.len(), 3);
+                assert_eq!(s.len(), 0);
                 // TODO: test keys and values
             }
             _ => panic!("Expected Object::Dictionary"),
@@ -705,16 +718,20 @@ mod tests {
         let (input, obj) = result.unwrap();
         assert_eq!(input, b""); // should consume input
         match obj {
-            pdf_parser::object::Object::IndirectObject { id, generation, dictionary } => {
+            pdf_parser::object::Object::IndirectObject {
+                id,
+                generation,
+                dictionary,
+            } => {
                 assert_eq!(id, 8);
                 assert_eq!(generation, 0);
                 let unboxed = *dictionary;
-                if let pdf_parser::object::Object::Dictionary(d) = unboxed {
+                if let pdf_parser::object::Object::Dictionary(d, s) = unboxed {
                     assert_eq!(d.len(), 4);
+                    assert_eq!(s.len(), 0);
                 } else {
                     panic!("Expected Object::Dictionary");
                 }
-
             }
             _ => panic!("Expected Object::IndirectReference"),
         }
@@ -726,20 +743,207 @@ mod tests {
         let input = b"% this is a comment\n";
         let result = pdf_parser::object::Object::parse_comment(input);
         assert!(result.is_ok());
-        let (input, comment) = result.unwrap();
+        let (input, obj) = result.unwrap();
         assert_eq!(input, b""); // should consume input
-        assert_eq!(comment, " this is a comment");
+        match obj {
+            pdf_parser::object::Object::Comment(s) => {
+                assert_eq!(s, " this is a comment");
+            }
+            _ => panic!("Expected Object::Comment"),
+        }
     }
 
     #[ignore]
     #[test]
-    fn test_parse_one() {
-
-    }
+    fn test_parse_one() {}
 
     #[ignore]
     #[test]
-    fn test_parse() {
+    fn test_parse() {}
+
+    #[test]
+    fn test_parse_xref_entry_1() {
+        // Test parsing xref entry
+        let input = b"0000000000 65535 f";
+        let result = pdf_parser::object::CrossReferenceEntry::parse(input);
+        assert!(result.is_ok());
+        let (input, xref_entry) = result.unwrap();
+        assert_eq!(input, b""); // should consume input
+        assert_eq!(xref_entry.offset, 0);
+        assert_eq!(xref_entry.generation, 65535);
+        assert_eq!(xref_entry.free, true);
+    }
+
+    #[test]
+    fn test_parse_xref_entry_2() {
+        // Test parsing xref entry
+        let input = b"0000000000 65535 f\n";
+        let result = pdf_parser::object::CrossReferenceEntry::parse(input);
+        assert!(result.is_ok());
+        let (input, xref_entry) = result.unwrap();
+        assert_eq!(input, b""); // should consume input
+        assert_eq!(xref_entry.offset, 0);
+        assert_eq!(xref_entry.generation, 65535);
+        assert_eq!(xref_entry.free, true);
+    }
+
+    #[test]
+    fn test_parse_xref_table_1() {
+        // Test parsing xref table
+        let input = b"xref\n0 1\n0000000000 65535 f\n";
+        let result = pdf_parser::object::CrossReferenceTable::parse(input);
+        println!("{:?}", result);
+        assert!(result.is_ok());
+        let (input, xref_table) = result.unwrap();
+        assert_eq!(input, b""); // should consume input
+        assert_eq!(xref_table.id, 0);
+        assert_eq!(xref_table.count, 1);
+        assert_eq!(xref_table.entries.len(), 1);
+        assert_eq!(xref_table.entries[0].offset, 0);
+        assert_eq!(xref_table.entries[0].generation, 65535);
+        assert_eq!(xref_table.entries[0].free, true);
+    }
+    #[test]
+    fn test_parse_xref_table_3() {
+        // Test parsing xref table
+        let input = b"xref\n0 51\n0000000000 65535 f \n0000000015 00000 n \n0000000107 00000 n \n0000000000 65535 f \n0000000414 00000 n \n0000000548 00000 n \n0000000664 00000 n \n0000000744 00000 n \n0000000850 00000 n \n0000000000 65535 f \n0000000959 00000 n \n0000001051 00000 n \n0000001130 00000 n \n0000001222 00000 n \n0000001640 00000 n \n0000001732 00000 n \n0000001784 00000 n \n0000001876 00000 n \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000207 00000 n \n0000000326 00000 n \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000001916 00000 n \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000000000 65535 f \n0000002040 00000 n \n0000002118 00000 n \ntrailer";
+        let result = pdf_parser::object::CrossReferenceTable::parse(input);
+        println!("{:?}", result);
+        assert!(result.is_ok());
+        let (input, xref_table) = result.unwrap();
+        assert_eq!(input, b"trailer"); // should consume input
+        assert_eq!(xref_table.id, 0);
+        assert_eq!(xref_table.count, 51);
+        assert_eq!(xref_table.entries.len(), 51);
+        assert_eq!(xref_table.entries[0].offset, 0);
+        assert_eq!(xref_table.entries[0].generation, 65535);
+        assert_eq!(xref_table.entries[0].free, true);
+    }
+
+    #[test]
+    fn test_parse_xref_table_2() {
+        // Test parsing xref table
+        let bytes = read_testcase("test_xref");
+        // case bytes to &[u8]
+        let input = bytes.as_slice();
+        let result = pdf_parser::object::CrossReferenceTable::parse(input);
+        assert!(result.is_ok());
+        let (input, xref_table) = result.unwrap();
+        assert_eq!(input, b""); // should consume input
+        assert_eq!(xref_table.id, 0);
+        assert_eq!(xref_table.count, 51);
+        assert_eq!(xref_table.entries.len(), 51);
+        assert_eq!(xref_table.entries[0].offset, 0);
+        assert_eq!(xref_table.entries[0].generation, 65535);
+        assert_eq!(xref_table.entries[0].free, true);
+    }
+
+    #[test]
+    fn test_parse_trailer() {
+        let bytes = read_testcase("test_trailer");
+        let input = bytes.as_slice();
+        let result = pdf_parser::object::Trailer::parse(input);
+        println!("{:?}", result);
+        assert!(result.is_ok());
+        let (input, trailer) = result.unwrap();
+        assert_eq!(input, b""); // should consume input
+        assert_eq!(trailer.startxref, 2167);
+        match trailer.dictionary {
+            pdf_parser::object::Object::Dictionary(d, s) => {
+                assert_eq!(d.len(), 1);
+                assert_eq!(s.len(), 0);
+            }
+            _ => panic!("Expected Object::Dictionary"),
+        }
+    }
+
+    #[test]
+    fn test_parse_stream() {
+        let bytes = read_testcase("test_stream");
+        let input = bytes.as_slice();
+        let result = pdf_parser::object::Object::parse_stream(input);
+        assert!(result.is_ok());
+        let (input, stream) = result.unwrap();
+        assert_eq!(input, b""); // should consume input
+        let expected = read_testcase("test_stream.expected");
+        // expected to &str
+        let expected = std::str::from_utf8(expected.as_slice()).unwrap();
+        assert_eq!(stream, expected);
+    }
+
+    #[test]
+    fn test_parse_object_with_stream() {
+        let bytes = read_testcase("test_object_with_stream");
+        let input = bytes.as_slice();
+        let result = pdf_parser::object::Object::parse_indirect_object(input);
+        println!("{:?}", result);
+        assert!(result.is_ok());
+        let (input, obj) = result.unwrap();
+        assert_eq!(input, b""); // should consume input
+        let expected = read_testcase("test_stream.expected");
+        let expected = std::str::from_utf8(expected.as_slice()).unwrap();
+        match obj {
+            pdf_parser::object::Object::IndirectObject {
+                id,
+                generation,
+                dictionary,
+            } => {
+                assert_eq!(id, 13);
+                assert_eq!(generation, 0);
+                let unboxed = *dictionary;
+                if let pdf_parser::object::Object::Dictionary(d, s) = unboxed {
+                    assert_eq!(d.len(), 0);
+                    assert_eq!(s, expected);
+                } else {
+                    panic!("Expected Object::Dictionary");
+                }
+            }
+            _ => panic!("Expected Object::IndirectReference"),
+        }
+    }
+
+    #[test]
+    fn test_parse_full() {
+        let bytes = read_testcase("test.pdf");
+        let input = bytes.as_slice();
+        let result = PDF::parse(input);
+        println!("{:?}", result);
+        assert!(result.is_ok());
+        let (input, pdf) = result.unwrap();
+        assert_eq!(input, b""); // should consume input
+        // Check header
+        assert_eq!(pdf.header.major, 1);
+        assert_eq!(pdf.header.minor, 7);
+
+        // Check objects
+        assert_eq!(pdf.body.len(), 20);
+
+        // Check xref
+        let first_xref = pdf.cross_reference_tables.first();
+        assert!(first_xref.is_some());
+        let first_xref = first_xref.unwrap();
+        assert_eq!(first_xref.id, 0);
+        assert_eq!(first_xref.count, 51);
+        assert_eq!(first_xref.entries.len(), 51);
+        // Check first entry
+        assert_eq!(first_xref.entries[0].offset, 0);
+        assert_eq!(first_xref.entries[0].generation, 65535);
+        assert_eq!(first_xref.entries[0].free, true);
+        // Check last entry
+        assert_eq!(first_xref.entries[50].offset, 2118);
+        assert_eq!(first_xref.entries[50].generation, 0);
+        assert_eq!(first_xref.entries[50].free, false);
+
+        // Check trailer
+        let trailer = pdf.trailer;
+        assert_eq!(trailer.startxref, 2167);
+        match trailer.dictionary {
+            pdf_parser::object::Object::Dictionary(d, s) => {
+                assert_eq!(d.len(), 1);
+                assert_eq!(s.len(), 0);
+            }
+            _ => panic!("Expected Object::Dictionary"),
+        }
 
     }
 }

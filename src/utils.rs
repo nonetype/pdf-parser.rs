@@ -25,9 +25,17 @@ pub fn bool(input: &[u8]) -> ParseResult<bool> {
 }
 
 pub fn digit1_u32(input: &[u8]) -> ParseResult<u32> {
+    let (input, digits) = digit1_u32_validate_length(input, 0)?;
+    Ok((input, digits))
+}
+
+pub fn digit1_u32_validate_length(input: &[u8], length: usize) -> ParseResult<u32> {
     let (input, digits) = digit1(input)?;
     // Convert the &[u8] to a str.
     let digits = std::str::from_utf8(digits).map_err(ParseError::UTF8Error)?;
+    if 0 < length && digits.len() != length {
+        return Err(nom::Err::Error(ParseError::NomError(ErrorKind::Verify)));
+    }
     // Convert the str to a u32.
     let digits = digits.parse::<u32>().map_err(ParseError::ParseIntError)?;
     Ok((input, digits))

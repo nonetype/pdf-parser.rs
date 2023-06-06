@@ -4,6 +4,8 @@ use nom::{error::ErrorKind, IResult};
 
 pub type ParseResult<'a, T> = IResult<&'a [u8], T, ParseError>;
 
+// TODO: Extend this error type to include more information about the error.
+// Currently, most of the errors are just "ParseError::NomError(ErrorKind)".
 #[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum ParseError {
     // #[error("IO error: {0:?}")]
@@ -26,6 +28,8 @@ pub enum ParseError {
     InvalidPDFXrefTable,
     #[error("Invalid PDF cross reference stream")]
     InvalidPDFXrefStream,
+    #[error("Invalid PDF cross reference entry: in use flag")]
+    InvalidPDFXrefEntryInUseFlag,
     #[error("Invalid PDF object")]
     InvalidPDFObject,
     #[error("Invalid PDF object stream")]

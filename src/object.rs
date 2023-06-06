@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::{Hasher, Hash}, fmt};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub enum Either<L, R> {
@@ -26,6 +26,8 @@ pub struct Header {
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub struct CrossReferenceTable {
+    pub id: u32,
+    pub count: u32,
     pub entries: Vec<CrossReferenceEntry>,
 }
 
@@ -33,7 +35,7 @@ pub struct CrossReferenceTable {
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub struct CrossReferenceEntry {
     /// 10-digit byte offset in the decoded stream.
-    pub offset: u64,
+    pub offset: u32,
     /// 5-digit generation number.
     pub generation: u32,
     /// Whether the entry is free.
@@ -43,12 +45,8 @@ pub struct CrossReferenceEntry {
 /// The PDF trailer.
 #[derive(Debug, Hash, Clone)]
 pub struct Trailer<'a> {
-    pub size: i64,
-    pub prev: Option<IndirectReference>,
-    pub root: IndirectReference,
-    pub encrypt: Option<IndirectReference>,
-    pub info: Option<IndirectReference>,
-    pub id: Option<Either<IndirectReference, Vec<HexString<'a>>>>,
+    pub dictionary: Object<'a>,
+    pub startxref: u32,
 }
 
 /// An indirect object reference.
@@ -76,9 +74,10 @@ pub enum Object<'a> {
     HexadecimalString(HexString<'a>),
     Name(NameObject<'a>),
     Array(Vec<Object<'a>>),
-    Dictionary(DictionaryObject<'a>),
+    Dictionary(DictionaryObject<'a>, &'a str),
     Stream(DictionaryObject<'a>, &'a [u8]),
     Null,
+    Comment(&'a str),
     IndirectReference {
         id: u32,
         generation: u32,
@@ -89,4 +88,44 @@ pub enum Object<'a> {
         generation: u32,
         dictionary: Box<Object<'a>>,
     },
+}
+
+impl<'a> Hash for Object<'a> {
+    #[allow(unused_must_use)] // TODO: Fix this
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Object::Boolean(b) => b.hash(state),
+            Object::Integer(i) => i.hash(state),
+            Object::Real(f) => f.to_bits().hash(state),
+            Object::LiteralString(s) => s.hash(state),
+            Object::HexadecimalString(s) => s.hash(state),
+            Object::Name(n) => n.hash(state),
+            Object::Array(a) => a.hash(state),
+            Object::Dictionary(d, s) => {
+                d.iter().map(|(k, v)| {
+                    k.hash(state);
+                    v.hash(state);
+                });
+                s.hash(state);
+            },
+            Object::Stream(d, s) => {
+                d.iter().map(|(k, v)| {
+                    k.hash(state);
+                    v.hash(state);
+                });
+                s.hash(state);
+            },
+            Object::Null => state.write_u8(0),
+            Object::Comment(s) => s.hash(state),
+            Object::IndirectReference { id, generation } => {
+                id.hash(state);
+                generation.hash(state);
+            },
+            Object::IndirectObject { id, generation, dictionary } => {
+                id.hash(state);
+                generation.hash(state);
+                dictionary.hash(state);
+            },
+        }
+    }
 }
