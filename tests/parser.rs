@@ -720,6 +720,17 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_parse_comment() {
+        // Test parsing comment
+        let input = b"% this is a comment\n";
+        let result = pdf_parser::object::Object::parse_comment(input);
+        assert!(result.is_ok());
+        let (input, comment) = result.unwrap();
+        assert_eq!(input, b""); // should consume input
+        assert_eq!(comment, " this is a comment");
+    }
+
     #[ignore]
     #[test]
     fn test_parse_one() {

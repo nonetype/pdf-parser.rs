@@ -161,6 +161,14 @@ impl<'a> Object<'a> {
         ))
     }
 
+    pub fn parse_comment(input: &'a [u8]) -> ParseResult<&str> {
+        let (input, (_, comment, _)) =
+            tuple((char('%'), take_till_newline, take_while_separator))(input)?;
+        let comment = std::str::from_utf8(comment).map_err(crate::error::ParseError::UTF8Error)?;
+
+        Ok((input, comment))
+    }
+
     pub fn parse_one(input: &'a [u8]) -> ParseResult<Object<'a>> {
         let (input, value_object) = alt((
             Object::parse_indirect_reference,

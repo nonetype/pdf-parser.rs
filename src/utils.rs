@@ -1,7 +1,7 @@
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_till, take_while, take_while1},
-    character::complete::char,
+    character::{complete::char, is_newline},
     character::complete::digit1,
     combinator::{eof, recognize},
     error::ErrorKind,
@@ -75,6 +75,10 @@ pub fn take_while1_whitespace(input: &[u8]) -> ParseResult<&[u8]> {
 // e.g., 'true' should be true, 'truee' should return an error.
 pub fn take_while_separator(input: &[u8]) -> ParseResult<&[u8]> {
     alt((take_while1_whitespace, eof))(input)
+}
+
+pub fn take_till_newline(input: &[u8]) -> ParseResult<&[u8]> {
+    take_till(is_newline)(input)
 }
 
 // fn take_bracketed<'a>(input: &'a [u8], opening: &'a [u8], closing: &'a [u8]) -> ParseResult<'a, &'a [u8]> {
